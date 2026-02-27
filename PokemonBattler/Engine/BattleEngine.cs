@@ -72,14 +72,14 @@ public class BattleEngine
 
     private Pokemon ChoosePokemon(Trainer trainer)
     {
+        var healthyPokemon = trainer.Party.Party.Where(p => p.HP > 0).ToList();
+
         var choice = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title("[grey]Which Pokemon will you send out?[/]")
-                .AddChoices(trainer.Party.Party
-                    .Where(p => p.HP > 0)
-                    .Select(p => p.Name)));
+                .AddChoices(healthyPokemon.Select(p => p.Name)));
 
-        return trainer.Party.Party.First(p => p.Name == choice);
+        return healthyPokemon.First(p => p.Name == choice);
     }
 
     private Move ChooseMove(Pokemon pokemon)
@@ -145,24 +145,115 @@ public class BattleEngine
 
         AnsiConsole.MarkupLine($"[bold]{attacker.Name}[/] used [yellow]{move.Name}[/]! Dealt [red]{damage}[/] damage.");
     }
-
-    private int CalculateDamage(Pokemon attacker, Pokemon defender, Move move)
+private double GetTypeEffectiveness(PokemonType moveType, PokemonType defenderType)
+{
+    var chart = new Dictionary<PokemonType, Dictionary<PokemonType, double>>
     {
-        if (move.Power == 0) return 0; // status moves
+        [PokemonType.Fire] = new() {
+            [PokemonType.Fire] = 0.5, [PokemonType.Water] = 0.5, [PokemonType.Grass] = 2,
+            [PokemonType.Ice] = 2, [PokemonType.Bug] = 2, [PokemonType.Rock] = 0.5,
+            [PokemonType.Dragon] = 0.5, [PokemonType.Steel] = 2
+        },
+        [PokemonType.Water] = new() {
+            [PokemonType.Fire] = 2, [PokemonType.Water] = 0.5, [PokemonType.Grass] = 0.5,
+            [PokemonType.Ground] = 2, [PokemonType.Rock] = 2, [PokemonType.Dragon] = 0.5
+        },
+        [PokemonType.Electric] = new() {
+            [PokemonType.Water] = 2, [PokemonType.Electric] = 0.5, [PokemonType.Grass] = 0.5,
+            [PokemonType.Ground] = 0, [PokemonType.Flying] = 2, [PokemonType.Dragon] = 0.5
+        },
+        [PokemonType.Grass] = new() {
+            [PokemonType.Fire] = 0.5, [PokemonType.Water] = 2, [PokemonType.Grass] = 0.5,
+            [PokemonType.Poison] = 0.5, [PokemonType.Ground] = 2, [PokemonType.Flying] = 0.5,
+            [PokemonType.Bug] = 0.5, [PokemonType.Rock] = 2, [PokemonType.Dragon] = 0.5,
+            [PokemonType.Steel] = 0.5
+        },
+        [PokemonType.Ice] = new() {
+            [PokemonType.Water] = 0.5, [PokemonType.Grass] = 2, [PokemonType.Ice] = 0.5,
+            [PokemonType.Ground] = 2, [PokemonType.Flying] = 2, [PokemonType.Dragon] = 2,
+            [PokemonType.Steel] = 0.5
+        },
+        [PokemonType.Fighting] = new() {
+            [PokemonType.Normal] = 2, [PokemonType.Ice] = 2, [PokemonType.Poison] = 0.5,
+            [PokemonType.Flying] = 0.5, [PokemonType.Psychic] = 0.5, [PokemonType.Bug] = 0.5,
+            [PokemonType.Rock] = 2, [PokemonType.Ghost] = 0, [PokemonType.Dark] = 2,
+            [PokemonType.Steel] = 2, [PokemonType.Fairy] = 0.5
+        },
+        [PokemonType.Ground] = new() {
+            [PokemonType.Fire] = 2, [PokemonType.Electric] = 2, [PokemonType.Grass] = 0.5,
+            [PokemonType.Poison] = 2, [PokemonType.Flying] = 0, [PokemonType.Bug] = 0.5,
+            [PokemonType.Rock] = 2, [PokemonType.Steel] = 2
+        },
+        [PokemonType.Flying] = new() {
+            [PokemonType.Electric] = 0.5, [PokemonType.Grass] = 2, [PokemonType.Fighting] = 2,
+            [PokemonType.Bug] = 2, [PokemonType.Rock] = 0.5, [PokemonType.Steel] = 0.5
+        },
+        [PokemonType.Psychic] = new() {
+            [PokemonType.Fighting] = 2, [PokemonType.Poison] = 2, [PokemonType.Psychic] = 0.5,
+            [PokemonType.Dark] = 0, [PokemonType.Steel] = 0.5
+        },
+        [PokemonType.Rock] = new() {
+            [PokemonType.Fire] = 2, [PokemonType.Ice] = 2, [PokemonType.Fighting] = 0.5,
+            [PokemonType.Ground] = 0.5, [PokemonType.Flying] = 2, [PokemonType.Bug] = 2,
+            [PokemonType.Steel] = 0.5
+        },
+        [PokemonType.Ghost] = new() {
+            [PokemonType.Normal] = 0, [PokemonType.Psychic] = 2, [PokemonType.Ghost] = 2,
+            [PokemonType.Dark] = 0.5
+        },
+        [PokemonType.Dragon] = new() {
+            [PokemonType.Dragon] = 2, [PokemonType.Steel] = 0.5, [PokemonType.Fairy] = 0
+        },
+        [PokemonType.Dark] = new() {
+            [PokemonType.Fighting] = 0.5, [PokemonType.Psychic] = 2, [PokemonType.Ghost] = 2,
+            [PokemonType.Dark] = 0.5, [PokemonType.Fairy] = 0.5
+        },
+        [PokemonType.Steel] = new() {
+            [PokemonType.Fire] = 0.5, [PokemonType.Water] = 0.5, [PokemonType.Electric] = 0.5,
+            [PokemonType.Ice] = 2, [PokemonType.Rock] = 2, [PokemonType.Steel] = 0.5,
+            [PokemonType.Fairy] = 2
+        },
+        [PokemonType.Fairy] = new() {
+            [PokemonType.Fire] = 0.5, [PokemonType.Fighting] = 2, [PokemonType.Poison] = 0.5,
+            [PokemonType.Dragon] = 2, [PokemonType.Dark] = 2, [PokemonType.Steel] = 0.5
+        },
+    };
 
-        // Standard gen 3+ damage formula
-        double attack = move.IsSpecial
-            ? (move.Type == attacker.Type1 || move.Type == attacker.Type2 ? attacker.BaseStats.SpecialAttack * 1.5 : attacker.BaseStats.SpecialAttack)
-            : (move.Type == attacker.Type1 || move.Type == attacker.Type2 ? attacker.BaseStats.Attack * 1.5 : attacker.BaseStats.Attack);
+    if (chart.TryGetValue(moveType, out var matchups) && matchups.TryGetValue(defenderType, out var multiplier))
+        return multiplier;
 
-        double defense = move.IsSpecial ? defender.BaseStats.SpecialDefense : defender.BaseStats.Defense;
+    return 1.0; // neutral by default
+}
+private int CalculateDamage(Pokemon attacker, Pokemon defender, Move move)
+{
+    if (move.Power == 0) return 0;
 
-        double damage = ((2.0 * attacker.Level / 5 + 2) * move.Power * attack / defense) / 50 + 2;
-        // Random factor (85-100%)
-        damage *= _rng.Next(85, 101) / 100.0;
+    double attack = move.IsSpecial
+        ? (move.Type == attacker.Type1 || move.Type == attacker.Type2 ? attacker.BaseStats.SpecialAttack * 1.5 : attacker.BaseStats.SpecialAttack)
+        : (move.Type == attacker.Type1 || move.Type == attacker.Type2 ? attacker.BaseStats.Attack * 1.5 : attacker.BaseStats.Attack);
 
-        return (int)damage;
+    double defense = move.IsSpecial ? defender.BaseStats.SpecialDefense : defender.BaseStats.Defense;
+
+    double effectiveness = GetTypeEffectiveness(move.Type, defender.Type1);
+    if (defender.Type2.HasValue)
+        effectiveness *= GetTypeEffectiveness(move.Type, defender.Type2.Value);
+
+    if (effectiveness == 0)
+    {
+        AnsiConsole.MarkupLine($"[black]It had no effect...[/]");
+        return 0;
     }
+    else if (effectiveness > 1)
+        AnsiConsole.MarkupLine($"[yellow]It's super effective![/]");
+    else if (effectiveness < 1)
+        AnsiConsole.MarkupLine($"[black]It's not very effective...[/]");
+
+    double damage = ((2.0 * attacker.Level / 5 + 2) * move.Power * attack / defense) / 50 + 2;
+    damage *= effectiveness;
+    damage *= _rng.Next(85, 101) / 100.0;
+
+    return (int)damage;
+}
 
     private void DisplayStatus(Pokemon player, Pokemon npc)
     {
