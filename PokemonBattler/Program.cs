@@ -7,7 +7,7 @@ class Program
     
     static void Main(string[] args)
     {
-        var playerName = UI.AskPlayerForName();
+        string playerName= "chad";
         var player = new Trainer(playerName);
 
         var charizard = new Pokemon("Charizard", 50, PokemonType.Fire, PokemonType.Flying,

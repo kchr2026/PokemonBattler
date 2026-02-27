@@ -45,24 +45,24 @@ public class Pokemon
     public Stats Ev { get; set; }
     public Stats Iv { get; set; }
 
-    private int CalculateHp()
-    {
-        // Official pokemon HP formula
-        return ((2 * BaseStats.HP + Iv.HP + (Ev.HP / 4)) * Level / 100) + Level + 10;
-    }
+
     public Pokemon(string name, int level, PokemonType type1, PokemonType? type2, Stats baseStats)
     {
-        
         Name = name;    
         Level = level;
         Type1 = type1;
         Type2 = type2;
-        BaseStats = baseStats;
-        // Ev = new Stats(); // defaults to 0
-        // Iv = new Stats(); // defaults to 0
-        // Moves = new List<Move>();
-        MaxHP = CalculateHp();
+        BaseStats = baseStats;  // Must be assigned first
+        Ev = new Stats();       // Must be assigned first
+        Iv = new Stats();       // Must be assigned first
+        Moves = new List<Move>();
+        MaxHP = CalculateHp();  // Now safe to call
         HP = MaxHP;
+    }
+    private int CalculateHp()
+    {
+        // Official pokemon HP formula
+        return ((2 * BaseStats.HP + Iv.HP + (Ev.HP / 4)) * Level / 100) + Level + 10;
     }
 }
 
