@@ -77,7 +77,7 @@ public class BattleEngine
         var choice = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title("[grey]Which Pokemon will you send out?[/]")
-                .AddChoices(healthyPokemon.Select(p => p.Name)));
+                .AddChoices(healthyPokemon.Select(p => p.Name + " HP: "+p.HP+"/"+p.MaxHP +" Level: "+ p.Level)));
 
         return healthyPokemon.First(p => p.Name == choice);
     }
