@@ -21,6 +21,14 @@ public enum PokemonType {
     Fairy,
     Stellar // Gen 9
 };
+public enum InvulnerableState
+{
+    None,
+    Airborne,    // Fly, Bounce
+    Underground, // Dig
+    Underwater   // Dive
+}
+
 public class Stats
 {
     public int HP { get; set; }

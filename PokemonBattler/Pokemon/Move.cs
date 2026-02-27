@@ -1,5 +1,6 @@
 namespace PokemonBattler;
 
+
 public class Move
 {
     public string Name { get; set; }
@@ -9,6 +10,7 @@ public class Move
     public int PP { get; set; }
     public int MaxPP { get; set; }
     public bool IsSpecial { get; set; }
+    public InvulnerableState? ChargesInto { get; set; } = null;
 
 public Move(string name, PokemonType type, int power, int accuracy, int pp, int maxPP, bool isSpecial){
     this.Name = name;

@@ -19,11 +19,13 @@ class Program
         charizard.Moves.Add(new Move("Flamethrower", PokemonType.Fire, 90, 100, 15, 15, true));
         charizard.Moves.Add(new Move("Air Slash", PokemonType.Flying, 75, 95, 15, 15, false));
         charizard.Moves.Add(new Move("Dragon Claw", PokemonType.Dragon, 80, 100, 15, 15, false));
-        charizard.Moves.Add(new Move("Slash", PokemonType.Normal, 70, 100, 20, 20, false));
+        charizard.Moves.Add(new Move("Fly", PokemonType.Ground, 80, 100, 10, 10, false)
+            { ChargesInto = InvulnerableState.Underground });
 
         blastoise.Moves.Add(new Move("Surf", PokemonType.Water, 90, 100, 15, 15, true));
         blastoise.Moves.Add(new Move("Ice Beam", PokemonType.Ice, 90, 100, 10, 10, true));
-        
+        blastoise.Moves.Add(new Move("Dig", PokemonType.Flying, 90, 95, 15, 15, false)
+            { ChargesInto = InvulnerableState.Airborne });
 
         player.Party.AddPokemon(charizard);
 
