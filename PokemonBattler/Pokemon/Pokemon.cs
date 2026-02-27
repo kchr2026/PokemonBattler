@@ -48,6 +48,8 @@ public class Pokemon
     public int MaxHP { get; set; }
     public PokemonType Type1 { get; set; }
     public PokemonType? Type2 { get; set; }
+    public InvulnerableState InvulnerableState { get; set; } = InvulnerableState.None;
+    public Move? QueuedMove { get; set; } = null;
     public List<Move> Moves { get; set; }
     public Stats BaseStats { get; set; }
     public Stats Ev { get; set; }

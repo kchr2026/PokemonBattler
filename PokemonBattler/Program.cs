@@ -13,7 +13,7 @@ class Program
         var charizard = new Pokemon("Charizard", 50, PokemonType.Fire, PokemonType.Flying,
             new Stats { HP = 78, Attack = 84, Defense = 78, SpecialAttack = 109, SpecialDefense = 85, Speed = 100 });
 
-        var blastoise = new Pokemon("Blastoise", 50, PokemonType.Fire, PokemonType.Flying,
+        var blastoise = new Pokemon("Blastoise", 50, PokemonType.Water, PokemonType.Flying,
             new Stats { HP = 78, Attack = 84, Defense = 78, SpecialAttack = 109, SpecialDefense = 85, Speed = 100 });
         
         charizard.Moves.Add(new Move("Flamethrower", PokemonType.Fire, 90, 100, 15, 15, true));
@@ -28,10 +28,12 @@ class Program
             { ChargesInto = InvulnerableState.Airborne });
 
         player.Party.AddPokemon(charizard);
+        player.Party.AddPokemon(charizard);
 
         // NPC trainer
         var npc = new Trainer("Red");
         
+        npc.Party.AddPokemon(blastoise);
         npc.Party.AddPokemon(blastoise);
 
         var engine = new BattleEngine();

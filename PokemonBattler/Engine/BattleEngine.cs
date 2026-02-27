@@ -14,32 +14,59 @@ public class BattleEngine
 
         AnsiConsole.WriteLine($"Go, {playerPokemon.Name}! vs {npcPokemon.Name}!\n");
 
-        while (playerPokemon.HP > 0 && npcPokemon.HP > 0)
+        while (player.Party.Party.Any(p => p.HP > 0) && npc.Party.Party.Any(p => p.HP > 0))
         {
             DisplayStatus(playerPokemon, npcPokemon);
-            
-            var playerMove = ChooseMove(playerPokemon);
-            var npcMove = npcPokemon.Moves[_rng.Next(npcPokemon.Moves.Count)]; // NPC picks randomly
 
-            // Speed determines who goes first
+            var playerMove = playerPokemon.QueuedMove ?? ChooseMove(playerPokemon);
+            var npcMove = npcPokemon.QueuedMove ?? npcPokemon.Moves[_rng.Next(npcPokemon.Moves.Count)];
+
             if (playerPokemon.BaseStats.Speed >= npcPokemon.BaseStats.Speed)
             {
                 ExecuteMove(playerPokemon, npcPokemon, playerMove);
+                if (npcPokemon.HP <= 0)
+                {
+                    AnsiConsole.MarkupLine($"[red]{npcPokemon.Name} fainted![/]");
+                    var next = npc.Party.Party.FirstOrDefault(p => p.HP > 0);
+                    if (next != null) { npcPokemon = next; AnsiConsole.MarkupLine($"[grey]Red sends out {npcPokemon.Name}![/]"); }
+                }
                 if (npcPokemon.HP > 0)
+                {
                     ExecuteMove(npcPokemon, playerPokemon, npcMove);
+                    if (playerPokemon.HP <= 0)
+                    {
+                        AnsiConsole.MarkupLine($"[red]{playerPokemon.Name} fainted![/]");
+                        var next = player.Party.Party.FirstOrDefault(p => p.HP > 0);
+                        if (next != null) playerPokemon = ChoosePokemon(player);
+                    }
+                }
             }
             else
             {
                 ExecuteMove(npcPokemon, playerPokemon, npcMove);
+                if (playerPokemon.HP <= 0)
+                {
+                    AnsiConsole.MarkupLine($"[red]{playerPokemon.Name} fainted![/]");
+                    var next = player.Party.Party.FirstOrDefault(p => p.HP > 0);
+                    if (next != null) playerPokemon = ChoosePokemon(player);
+                }
                 if (playerPokemon.HP > 0)
+                {
                     ExecuteMove(playerPokemon, npcPokemon, playerMove);
+                    if (npcPokemon.HP <= 0)
+                    {
+                        AnsiConsole.MarkupLine($"[red]{npcPokemon.Name} fainted![/]");
+                        var next = npc.Party.Party.FirstOrDefault(p => p.HP > 0);
+                        if (next != null) { npcPokemon = next; AnsiConsole.MarkupLine($"[grey]Red sends out {npcPokemon.Name}![/]"); }
+                    }
+                }
             }
         }
 
-        if (playerPokemon.HP > 0)
-            AnsiConsole.MarkupLine($"[green]{playerPokemon.Name} wins![/]");
+        if (player.Party.Party.Any(p => p.HP > 0))
+            AnsiConsole.MarkupLine("[green]You won![/]");
         else
-            AnsiConsole.MarkupLine($"[red]{playerPokemon.Name} fainted![/]");
+            AnsiConsole.MarkupLine("[red]You lost![/]");
     }
 
     private Pokemon ChoosePokemon(Trainer trainer)
@@ -68,6 +95,41 @@ public class BattleEngine
 
     private void ExecuteMove(Pokemon attacker, Pokemon defender, Move move)
     {
+        // If the move is a two-turn move and the attacker isn't charging yet
+        if (move.ChargesInto != null && attacker.InvulnerableState == InvulnerableState.None)
+        {
+            attacker.InvulnerableState = move.ChargesInto.Value;
+            attacker.QueuedMove = move;
+            AnsiConsole.MarkupLine($"[yellow]{attacker.Name} is charging up {move.Name}![/]");
+            return;
+        }
+
+        // Second turn — execute the queued move
+        if (attacker.QueuedMove != null)
+        {
+            move = attacker.QueuedMove;
+            attacker.InvulnerableState = InvulnerableState.None;
+            attacker.QueuedMove = null;
+        }
+
+        // Check if defender is invulnerable
+        if (defender.InvulnerableState != InvulnerableState.None)
+        {
+            bool canHit = defender.InvulnerableState switch
+            {
+                InvulnerableState.Underground => move.Type == PokemonType.Ground, // Earthquake/Magnitude
+                InvulnerableState.Airborne => move.Type == PokemonType.Electric || move.Name == "Gust" || move.Name == "Twister", // Thunder, Gust etc.
+                InvulnerableState.Underwater => move.Type == PokemonType.Water, // Surf/Whirlpool
+                _ => false
+            };
+
+            if (!canHit)
+            {
+                AnsiConsole.MarkupLine($"[yellow]{attacker.Name} used {move.Name}... but it missed![/]");
+                return;
+            }
+        }
+
         // Miss check
         if (_rng.Next(100) >= move.Accuracy)
         {
