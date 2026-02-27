@@ -28,6 +28,7 @@ public class BattleEngine
                 {
                     AnsiConsole.MarkupLine($"[red]{npcPokemon.Name} fainted![/]");
                     var next = npc.Party.Party.FirstOrDefault(p => p.HP > 0);
+                    
                     if (next != null) { npcPokemon = next; AnsiConsole.MarkupLine($"[grey]Red sends out {npcPokemon.Name}![/]"); }
                 }
                 if (npcPokemon.HP > 0)
@@ -74,7 +75,9 @@ public class BattleEngine
         var choice = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title("[grey]Which Pokemon will you send out?[/]")
-                .AddChoices(trainer.Party.Party.Select(p => p.Name)));
+                .AddChoices(trainer.Party.Party
+                    .Where(p => p.HP > 0)
+                    .Select(p => p.Name)));
 
         return trainer.Party.Party.First(p => p.Name == choice);
     }
