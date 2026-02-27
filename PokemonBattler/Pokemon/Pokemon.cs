@@ -50,7 +50,7 @@ public class Pokemon
         // Official pokemon HP formula
         return ((2 * BaseStats.HP + Iv.HP + (Ev.HP / 4)) * Level / 100) + Level + 10;
     }
-    public Pokemon(string name, int level, PokemonType type1, PokemonType? type2, Stats baseStats, List<Move> moves)
+    public Pokemon(string name, int level, PokemonType type1, PokemonType? type2, Stats baseStats)
     {
         
         Name = name;    
@@ -58,9 +58,9 @@ public class Pokemon
         Type1 = type1;
         Type2 = type2;
         BaseStats = baseStats;
-        Ev = new Stats(); // defaults to 0
-        Iv = new Stats(); // defaults to 0
-        Moves = new List<Move>();
+        // Ev = new Stats(); // defaults to 0
+        // Iv = new Stats(); // defaults to 0
+        // Moves = new List<Move>();
         MaxHP = CalculateHp();
         HP = MaxHP;
     }
