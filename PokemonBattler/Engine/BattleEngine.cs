@@ -1,3 +1,4 @@
+namespace PokemonBattler;
 using Spectre.Console;
 public class BattleEngine
 {
@@ -16,7 +17,7 @@ public class BattleEngine
         while (playerPokemon.HP > 0 && npcPokemon.HP > 0)
         {
             DisplayStatus(playerPokemon, npcPokemon);
-
+            
             var playerMove = ChooseMove(playerPokemon);
             var npcMove = npcPokemon.Moves[_rng.Next(npcPokemon.Moves.Count)]; // NPC picks randomly
 
@@ -59,7 +60,7 @@ public class BattleEngine
                 .AddChoices(pokemon.Moves.Select(m => $"{m.Name} (PP: {m.PP}/{m.MaxPP})")));
 
         // Match back to the actual Move object
-        var moveName = choice.Split(' ')[0];
+        var moveName = choice.Split('(')[0].Trim();
         var move = pokemon.Moves.First(m => m.Name == moveName);
         move.PP--;
         return move;
@@ -85,12 +86,13 @@ public class BattleEngine
         if (move.Power == 0) return 0; // status moves
 
         // Standard gen 3+ damage formula
-        double attack = move.Type == attacker.Type1 || move.Type == attacker.Type2
-            ? attacker.BaseStats.Attack * 1.5  // STAB
-            : attacker.BaseStats.Attack;
+        double attack = move.IsSpecial
+            ? (move.Type == attacker.Type1 || move.Type == attacker.Type2 ? attacker.BaseStats.SpecialAttack * 1.5 : attacker.BaseStats.SpecialAttack)
+            : (move.Type == attacker.Type1 || move.Type == attacker.Type2 ? attacker.BaseStats.Attack * 1.5 : attacker.BaseStats.Attack);
 
-        double damage = ((2.0 * attacker.Level / 5 + 2) * move.Power * attack / defender.BaseStats.Defense) / 50 + 2;
+        double defense = move.IsSpecial ? defender.BaseStats.SpecialDefense : defender.BaseStats.Defense;
 
+        double damage = ((2.0 * attacker.Level / 5 + 2) * move.Power * attack / defense) / 50 + 2;
         // Random factor (85-100%)
         damage *= _rng.Next(85, 101) / 100.0;
 
