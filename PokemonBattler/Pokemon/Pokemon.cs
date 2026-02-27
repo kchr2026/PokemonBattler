@@ -52,8 +52,7 @@ public class Pokemon
     }
     public Pokemon(string name, int level, PokemonType type1, PokemonType? type2, Stats baseStats, List<Move> moves)
     {
-
-        Moves = moves;
+        
         Name = name;    
         Level = level;
         Type1 = type1;
@@ -61,7 +60,7 @@ public class Pokemon
         BaseStats = baseStats;
         Ev = new Stats(); // defaults to 0
         Iv = new Stats(); // defaults to 0
-        Moves = new List<string>();
+        Moves = new List<Move>();
         MaxHP = CalculateHp();
         HP = MaxHP;
     }
